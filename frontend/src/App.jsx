@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from "axios";
 import { useState, useEffect } from "react";   
+import DeleteModal from './components/deleteModal';
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
   const [expenses, setExpenses] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [filterCategory, setFilterCategory] = useState("All");
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     axios.get("http://localhost:5000/expenses")
@@ -81,16 +83,34 @@ function handleEdit(id) {
   setEditIndex(id);
 }
 
-const handleDelete = async (id) => {
-  try {
-    await axios.delete(`http://localhost:5000/expenses/${id}`);
-    const updatedExpenses = expenses.filter((item) => item._id !== id);
-    setExpenses(updatedExpenses);
-  }
-  catch (err){
-    console.log(err);
-  }
+const handleDelete = (id) => {
+    setDeleteId(id);
 };
+
+const confirmDelete = async () => {
+    try {
+        await axios.delete(`http://localhost:5000/expenses/${deleteId}`);
+
+        const updatedExpenses = expenses.filter(
+            (item) => item._id !== deleteId
+        );
+
+        setExpenses(updatedExpenses);
+        setDeleteId(null);
+
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+const handleCancelEdit = () => {
+  setTitle("");
+  setAmount("");
+  setCategory("");
+  setDate("");
+  setEditIndex(null);
+}
+
 
   return (
     <div className='container mt-5 mb-5 w-50'>
@@ -149,6 +169,9 @@ const handleDelete = async (id) => {
         </div>
         <div className='d-flex justify-content-center'>
         <button onClick={handleAddExpense} className='btn btn-success w-25'>{btn}</button>
+        {editIndex !== null && (
+        <button onClick={handleCancelEdit} className="btn btn-danger ms-5">Cancel</button>
+        )}
         </div>
       </div>
       {
@@ -207,6 +230,12 @@ const handleDelete = async (id) => {
           <p>Add to see the expenses</p>
         )
       }
+      {deleteId !== null && (
+          <DeleteModal
+              onCancel={() => setDeleteId(null)}
+              onConfirm={confirmDelete}
+          />
+      )}
     </div>
   )
 }
